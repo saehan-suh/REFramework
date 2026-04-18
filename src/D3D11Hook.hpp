@@ -10,7 +10,7 @@
 
 class D3D11Hook {
 public:
-    using OnPresentFn =  std::function<void(D3D11Hook&)> OnPresentFn;
+    using OnPresentFn = std::function<void(D3D11Hook&)>;
     using OnResizeBuffersFn = std::function<void(D3D11Hook&)>;
 
     D3D11Hook() = default;
