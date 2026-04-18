@@ -173,12 +173,12 @@ FetchContent_Declare(kananlib
 )
 FetchContent_MakeAvailable(kananlib)
 
-message(STATUS "Fetching GSL (microsoft/GSL v4.0.0 @ a3534567187d2edc428efd3f13466ff75fe5805c)...")
+message(STATUS "Fetching GSL (a3534567187d2edc428efd3f13466ff75fe5805c)...")
 FetchContent_Declare(GSL
-    GIT_REPOSITORY
-        "https://github.com/microsoft/GSL"
-    GIT_TAG
-        a3534567187d2edc428efd3f13466ff75fe5805c
+	GIT_REPOSITORY
+		"https://github.com/microsoft/GSL"
+	GIT_TAG
+		a3534567187d2edc428efd3f13466ff75fe5805c
 )
 FetchContent_MakeAvailable(GSL)
 
@@ -2551,6 +2551,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(RE2 PROPERTIES
@@ -2758,6 +2759,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(RE2_TDB66 PROPERTIES
@@ -4886,6 +4888,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(RE3 PROPERTIES
@@ -5093,6 +5096,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(RE3_TDB67 PROPERTIES
@@ -5300,6 +5304,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(RE4 PROPERTIES
@@ -8390,6 +8395,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(RE7 PROPERTIES
@@ -8597,6 +8603,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(RE7_TDB49 PROPERTIES
@@ -9766,6 +9773,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(RE8 PROPERTIES
@@ -10933,6 +10941,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(DMC5 PROPERTIES
@@ -12102,6 +12111,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(MHRISE PROPERTIES
@@ -13271,6 +13281,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(SF6 PROPERTIES
@@ -14440,6 +14451,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(DD2 PROPERTIES
@@ -15609,6 +15621,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(MHWILDS PROPERTIES
@@ -16778,6 +16791,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(MHSTORIES3 PROPERTIES
@@ -17947,6 +17961,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(STARFORCE PROPERTIES
@@ -19116,6 +19131,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(RE9 PROPERTIES
@@ -20285,6 +20301,7 @@ if(REF_BUILD_FRAMEWORK AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework
 		delayimp
 		DirectXTK
 		DirectXTK12
+		Microsoft.GSL::GSL
 	)
 
 	set_target_properties(PRAGMATA PROPERTIES
