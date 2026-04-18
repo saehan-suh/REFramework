@@ -173,6 +173,15 @@ FetchContent_Declare(kananlib
 )
 FetchContent_MakeAvailable(kananlib)
 
+message(STATUS "Fetching GSL (microsoft/GSL v4.0.0 @ a3534567187d2edc428efd3f13466ff75fe5805c)...")
+FetchContent_Declare(GSL
+    GIT_REPOSITORY
+        "https://github.com/microsoft/GSL"
+    GIT_TAG
+        a3534567187d2edc428efd3f13466ff75fe5805c
+)
+FetchContent_MakeAvailable(GSL)
+
 # Target: spdlog
 if(REF_BUILD_DEPENDENCIES AND CMAKE_SIZEOF_VOID_P EQUAL 8) # build-framework-dependencies
 	set(spdlog_SOURCES
