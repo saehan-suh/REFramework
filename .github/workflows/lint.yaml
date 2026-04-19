@@ -18,8 +18,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install LLVM
-        run: choco install llvm --version=17.0.6 -y
+      - name: Verify LLVM presence and clang-tidy
+        run: |
+          $llvmPath = (Get-Command clang-tidy -ErrorAction SilentlyContinue)?.Source
+          if (-not $llvmPath) {
+            choco install llvm -y
+          }
+          clang-tidy --version
         shell: powershell
 
       - name: Add LLVM to PATH
