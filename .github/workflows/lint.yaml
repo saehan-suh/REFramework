@@ -66,9 +66,17 @@ jobs:
       - name: Run clang-tidy
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
+          $workspace = "${{github.workspace}}"
           $files = "${{ steps.changed-files.outputs.all_changed_files }}"
           clang-tidy `
-            -p build `
+            --extra-arg="-I$workspace/dependencies/spdlog/include" `
+            --extra-arg="-I$workspace/dependencies/spdlog/include/spdlog" `
+            --extra-arg="-I$workspace/shared" `
+            --extra-arg="-I$workspace/src" `
+            --extra-arg="-I$workspace/include" `
+            --extra-arg="-I$workspace/build/_deps/GSL-src/include" `
+            --extra-arg="-std=c++23" `
+            --extra-arg="-DDEVELOPER_MODE" `
             $files.Split(" ")
         shell: pwsh
 
