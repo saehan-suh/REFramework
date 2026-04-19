@@ -36,8 +36,12 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -B build `
-                -DCMAKE_BUILD_TYPE=Release
+          cmake -B build_ninja `
+            -G "Ninja" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON `
+            -DDEVELOPER_MODE=ON `
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
         shell: pwsh
 
       - name: Verify compile_commands.json
