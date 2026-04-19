@@ -28,19 +28,21 @@ bool D3D11Hook::hook() {
     ID3D11DeviceContext* context = nullptr;
 
     D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
-    DXGI_SWAP_CHAIN_DESC swap_chain_desc;
-
-    ZeroMemory(&swap_chain_desc, sizeof(swap_chain_desc));
-
-    swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swap_chain_desc.BufferCount = 1;
-    swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swap_chain_desc.OutputWindow = h_wnd;
-    swap_chain_desc.SampleDesc.Count = 1;
-    swap_chain_desc.Windowed = TRUE;
-    swap_chain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-    swap_chain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-    swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    DXGI_SWAP_CHAIN_DESC swap_chain_desc{
+        .BufferDesc = {
+            .Format        = DXGI_FORMAT_R8G8B8A8_UNORM,
+            .ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED,
+            .Scaling       = DXGI_MODE_SCALING_UNSPECIFIED,
+        },
+        .SampleDesc = {
+            .Count         = 1,
+        },
+        .BufferUsage   = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+        .BufferCount   = 1,
+        .OutputWindow  = h_wnd,
+        .Windowed      = TRUE,
+        .SwapEffect    = DXGI_SWAP_EFFECT_DISCARD,
+    };
 
     const auto original_bytes = utility::get_original_bytes(&D3D11CreateDeviceAndSwapChain);
 
