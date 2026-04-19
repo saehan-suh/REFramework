@@ -11,8 +11,6 @@
 
 #include "D3D11Hook.hpp"
 
-using namespace std;
-
 static D3D11Hook* g_d3d11_hook = nullptr;
 
 D3D11Hook::~D3D11Hook() {
