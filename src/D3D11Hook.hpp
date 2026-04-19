@@ -16,6 +16,12 @@ public:
     D3D11Hook() = default;
     virtual ~D3D11Hook();
 
+    // Explicit copy, move ctors disabled; Rule of Five
+    D3D11Hook(const D3D11Hook&) = delete;
+    D3D11Hook& operator=(const D3D11Hook&) = delete;
+    D3D11Hook(D3D11Hook&&) = delete;
+    D3D11Hook& operator=(D3D11Hook&&) = delete;
+
 	bool is_hooked() {
 		return m_hooked;
 	}
