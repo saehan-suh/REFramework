@@ -1,9 +1,12 @@
 name: Lint
 
 on:
+  push:
+    branches:
+      - '**'
   pull_request:
     branches:
-      - cleaning
+      - '**'
 
 jobs:
   clang-tidy:

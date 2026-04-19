@@ -1,5 +1,10 @@
 name: Dev Release
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches:
+      - master
+      - cleaning
+  workflow_dispatch:
 env:
   BUILD_TYPE: Release
 jobs:
