@@ -1,0 +1,54 @@
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - cleaning
+
+jobs:
+  clang-tidy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install LLVM
+        run: choco install llvm --version=17.0.6 -y
+        shell: powershell
+
+      - name: Add LLVM to PATH
+        run: |
+          echo "C:\Program Files\LLVM\bin" | `
+          Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: powershell
+
+      - name: Configure CMake
+        run: |
+          cmake -B build `
+                -DCMAKE_BUILD_TYPE=Release
+        shell: powershell
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            src/**/*.cpp
+            src/**/*.hpp
+
+      - name: Run clang-tidy
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          $files = "${{ steps.changed-files.outputs.all_changed_files }}"
+          clang-tidy `
+            -p build/compile_commands.json `
+            $files.Split(" ")
+        shell: powershell
+
+      - name: No relevant files changed
+        if: steps.changed-files.outputs.any_changed == 'false'
+        run: echo "No C++ files changed, skipping lint."
+        shell: powershell
