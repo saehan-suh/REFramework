@@ -106,11 +106,14 @@ bool D3D11Hook::hook() {
     utility::ThreadSuspender suspender{};
 
     try {
+        constexpr int k_present_vtable_index = 8;
+        constexpr int k_resize_buffers_vtable_index = 13;
+
         m_present_hook.reset();
         m_resize_buffers_hook.reset();
 
-        auto& present_fn = (*(void***)swap_chain)[8];
-        auto& resize_buffers_fn = (*(void***)swap_chain)[13];
+        auto& present_fn = (*(void***)swap_chain)[k_present_vtable_index];
+        auto& resize_buffers_fn = (*(void***)swap_chain)[k_resize_buffers_vtable_index];
 
         m_present_hook = std::make_unique<PointerHook>(&present_fn, (void*)&D3D11Hook::present);
         m_resize_buffers_hook = std::make_unique<PointerHook>(&resize_buffers_fn, (void*)&D3D11Hook::resize_buffers);
