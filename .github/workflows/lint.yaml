@@ -40,6 +40,16 @@ jobs:
                 -DCMAKE_BUILD_TYPE=Release
         shell: pwsh
 
+      - name: Verify compile_commands.json
+        run: |
+          if (Test-Path "build/compile_commands.json") {
+              Write-Host "compile_commands.json found"
+          } else {
+              Write-Host "compile_commands.json NOT found"
+              Get-ChildItem build/ -ErrorAction SilentlyContinue
+          }
+        shell: pwsh
+
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v44
