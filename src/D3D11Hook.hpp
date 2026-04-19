@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <utility>                      // std::scope_exit
 
 #include <d3d11.h>
 #include <dxgi.h>
