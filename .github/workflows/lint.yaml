@@ -53,7 +53,7 @@ jobs:
         run: |
           $files = "${{ steps.changed-files.outputs.all_changed_files }}"
           clang-tidy `
-            -p build/compile_commands.json `
+            -p build `
             $files.Split(" ")
         shell: pwsh
 
