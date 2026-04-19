@@ -23,9 +23,9 @@ bool D3D11Hook::hook() {
     g_d3d11_hook = this;
 
     HWND h_wnd = GetDesktopWindow();
-    IDXGISwapChain* swap_chain = nullptr;
-    ID3D11Device* device = nullptr;
-    ID3D11DeviceContext* context = nullptr;
+    ComPtr<IDXGISwapChain> swap_chain {};
+    ComPtr<ID3D11Device> device {};
+    ComPtr<ID3D11DeviceContext> context {};
 
     D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
     DXGI_SWAP_CHAIN_DESC swap_chain_desc{
@@ -112,7 +112,7 @@ bool D3D11Hook::hook() {
         m_present_hook.reset();
         m_resize_buffers_hook.reset();
 
-        auto* vtable = *reinterpret_cast<void***>(swap_chain);
+        auto* vtable = *reinterpret_cast<void***>(swap_chain.Get());
         auto& present_fn = vtable[k_present_vtable_index];
         auto& resize_buffers_fn = vtable[k_resize_buffers_vtable_index];
 
@@ -132,10 +132,6 @@ bool D3D11Hook::hook() {
     }
 
     suspender.resume();
-
-    device->Release();
-    context->Release();
-    swap_chain->Release();
     return m_hooked;
 }
 
