@@ -156,7 +156,7 @@ HRESULT last_d3d11_present_result = S_OK;
 HRESULT WINAPI D3D11Hook::present(IDXGISwapChain* swap_chain, UINT sync_interval, UINT flags) {
     std::scoped_lock _{g_framework->get_hook_monitor_mutex()};
 
-    auto d3d11 = g_d3d11_hook;
+    auto* const d3d11 = g_d3d11_hook;
 
     // This line must be called before calling our detour function because we might have to unhook the function inside our detour.
     auto present_fn = d3d11->m_present_hook->get_original<decltype(D3D11Hook::present)*>();
