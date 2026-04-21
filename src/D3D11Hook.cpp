@@ -206,7 +206,7 @@ HRESULT WINAPI D3D11Hook::present(IDXGISwapChain* swap_chain, UINT sync_interval
     // if an infinite loop occurs, this will prevent the game from crashing
     // while keeping our hook intact
     if (g_inside_d3d11_present) {
-        auto original_bytes = utility::get_original_bytes(Address{present_fn});
+        const auto original_bytes = utility::get_original_bytes(Address{present_fn});
 
         if (original_bytes) {
             ProtectionOverride protection_override{present_fn, original_bytes->size(), PAGE_EXECUTE_READWRITE};
@@ -225,23 +225,24 @@ HRESULT WINAPI D3D11Hook::present(IDXGISwapChain* swap_chain, UINT sync_interval
 
     HRESULT result = S_OK;
     g_inside_d3d11_present = true;
+    auto inside_guard = std::scope_exit([d3d11](){
+        g_inside_d3d11_present = false;
+        d3d11->m_inside_present = false;
+    });
 
     if (!d3d11->m_ignore_next_present) {
         result = present_fn(swap_chain, sync_interval, flags);
-        last_d3d11_present_result = result;
     } else {
         d3d11->m_ignore_next_present = false;
-        last_d3d11_present_result = S_OK;
     }
 
-    g_inside_d3d11_present = false;
+    last_d3d11_present_result = result;
 
     if (d3d11->m_on_post_present) {
         d3d11->m_on_post_present(*d3d11);
     }
 
     d3d11->m_last_depthstencil_used.Reset();
-    d3d11->m_inside_present = false;
 
     return result;
 }
