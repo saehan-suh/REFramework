@@ -1,14 +1,11 @@
-#include <algorithm>
-#include <spdlog/spdlog.h>
-#include <utility/Thread.hpp>
-#include <utility/Module.hpp>
+#include <utility>                      // std::scope_exit
 
-#include <openvr.h>
+#include <spdlog/spdlog.h>              // Logging
+#include <utility/Thread.hpp>           // utility::ThreadSuspender; kananlib
+#include <utility/Module.hpp>           // utility::get_original_bytes, Address; kananlib
 
-#include "REFramework.hpp"
-
-#include "WindowFilter.hpp"
-
+#include "REFramework.hpp"              // g_framework
+#include "WindowFilter.hpp"             // WindowsFilter::get()
 #include "D3D11Hook.hpp"
 
 static D3D11Hook* g_d3d11_hook = nullptr;
@@ -301,7 +298,7 @@ void WINAPI D3D11Hook::set_render_targets(
     ID3D11DeviceContext* context, UINT num_views, ID3D11RenderTargetView* const* rtvs, ID3D11DepthStencilView* dsv) {
     std::scoped_lock _{g_framework->get_hook_monitor_mutex()};
 
-    auto d3d11 = g_d3d11_hook;
+    auto* const d3d11 = g_d3d11_hook;
 
     if (dsv != nullptr) {
         //auto obj_name = fmt::format("Depthstencil @ {:p}", (void*)d3d11->m_last_depthstencil_used.Get());
@@ -312,7 +309,9 @@ void WINAPI D3D11Hook::set_render_targets(
         dsv->GetDesc(&desc);
 
         if (desc.Flags & D3D11_DSV_FLAG::D3D11_DSV_READ_ONLY_DEPTH) {
-            dsv->GetResource((ID3D11Resource**)d3d11->m_last_depthstencil_used.GetAddressOf());
+            dsv->GetResource(
+                reinterpret_cast<ID3D11Resource**>(d3d11->m_last_depthstencil_used.GetAddressOf())
+            );
 
             //OutputDebugString(fmt::format("Flags: {}", desc.Flags).c_str());
             //OutputDebugString(fmt::format("Format: {}", desc.Format).c_str());

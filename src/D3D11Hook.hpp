@@ -1,13 +1,13 @@
 #pragma once
 
-#include <functional>
-#include <utility>                      // std::scope_exit
+#include <functional>               // std::function
+#include <memory>                   // std::unique_ptr<T>
 
-#include <d3d11.h>
-#include <dxgi.h>
-#include <wrl.h>
+#include <d3d11.h>                  // ID3D11Device*, ID3D11DeviceContext*, ID3D111Texture2D
+#include <dxgi.h>                   // IDXGISwapChain*
+#include <wrl.h>                    // ComPtr
 
-#include "utility/PointerHook.hpp"
+#include "utility/PointerHook.hpp"  // PointerHook, ProtectionOverride; kananlib
 
 class D3D11Hook {
 public:
