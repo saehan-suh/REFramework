@@ -254,7 +254,7 @@ HRESULT WINAPI D3D11Hook::resize_buffers(
     IDXGISwapChain* swap_chain, UINT buffer_count, UINT width, UINT height, DXGI_FORMAT new_format, UINT swap_chain_flags) {
     std::scoped_lock _{g_framework->get_hook_monitor_mutex()};
 
-    auto d3d11 = g_d3d11_hook;
+    auto* const d3d11 = g_d3d11_hook;
     auto resize_buffers_fn = d3d11->m_resize_buffers_hook->get_original<decltype(D3D11Hook::resize_buffers)*>();
 
     DXGI_SWAP_CHAIN_DESC swap_desc{};
@@ -274,7 +274,7 @@ HRESULT WINAPI D3D11Hook::resize_buffers(
     }
 
     if (g_inside_d3d11_resize_buffers) {
-        auto original_bytes = utility::get_original_bytes(Address{resize_buffers_fn});
+        const auto original_bytes = utility::get_original_bytes(Address{resize_buffers_fn});
 
         if (original_bytes) {
             ProtectionOverride protection_override{resize_buffers_fn, original_bytes->size(), PAGE_EXECUTE_READWRITE};
@@ -288,10 +288,11 @@ HRESULT WINAPI D3D11Hook::resize_buffers(
     }
 
     g_inside_d3d11_resize_buffers = true;
+    auto inside_guard = std::scope_exit([](){
+        g_inside_d3d11_resize_buffers = false;
+    });
 
     last_d3d11_resize_buffers_result = resize_buffers_fn(swap_chain, buffer_count, width, height, new_format, swap_chain_flags);
-
-    g_inside_d3d11_resize_buffers = false;
 
     return last_d3d11_resize_buffers_result;
 }
