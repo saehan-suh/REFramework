@@ -1,17 +1,12 @@
-#include <algorithm>
-#include <spdlog/spdlog.h>
-#include <utility/Thread.hpp>
-#include <utility/Module.hpp>
+#include <utility>                      // std::scope_exit
 
-#include <openvr.h>
+#include <spdlog/spdlog.h>              // Logging
+#include <utility/Thread.hpp>           // utility::ThreadSuspender; kananlib
+#include <utility/Module.hpp>           // utility::get_original_bytes, Address; kananlib
 
-#include "REFramework.hpp"
-
-#include "WindowFilter.hpp"
-
+#include "REFramework.hpp"              // g_framework
+#include "WindowFilter.hpp"             // WindowsFilter::get()
 #include "D3D11Hook.hpp"
-
-using namespace std;
 
 static D3D11Hook* g_d3d11_hook = nullptr;
 
@@ -25,69 +20,107 @@ bool D3D11Hook::hook() {
     g_d3d11_hook = this;
 
     HWND h_wnd = GetDesktopWindow();
-    IDXGISwapChain* swap_chain = nullptr;
-    ID3D11Device* device = nullptr;
-    ID3D11DeviceContext* context = nullptr;
+    ComPtr<IDXGISwapChain> swap_chain {};
+    ComPtr<ID3D11Device> device {};
+    ComPtr<ID3D11DeviceContext> context {};
 
     D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
-    DXGI_SWAP_CHAIN_DESC swap_chain_desc;
-
-    ZeroMemory(&swap_chain_desc, sizeof(swap_chain_desc));
-
-    swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swap_chain_desc.BufferCount = 1;
-    swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swap_chain_desc.OutputWindow = h_wnd;
-    swap_chain_desc.SampleDesc.Count = 1;
-    swap_chain_desc.Windowed = TRUE;
-    swap_chain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-    swap_chain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-    swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    DXGI_SWAP_CHAIN_DESC swap_chain_desc{
+        .BufferDesc = {
+            .Format        = DXGI_FORMAT_R8G8B8A8_UNORM,
+            .ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED,
+            .Scaling       = DXGI_MODE_SCALING_UNSPECIFIED,
+        },
+        .SampleDesc = {
+            .Count         = 1,
+        },
+        .BufferUsage   = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+        .BufferCount   = 1,
+        .OutputWindow  = h_wnd,
+        .Windowed      = TRUE,
+        .SwapEffect    = DXGI_SWAP_EFFECT_DISCARD,
+    };
 
     const auto original_bytes = utility::get_original_bytes(&D3D11CreateDeviceAndSwapChain);
 
     // Temporarily unhook D3D11CreateDeviceAndSwapChain
     // it allows compatibility with ReShade and other overlays that hook it
     // this is just a dummy device anyways, we don't want the other overlays to be able to use it
+    
+    // Save hooked bytes if function is hooked
+    std::vector<uint8_t> hooked_bytes{};
+
+    auto restore_guard = std::scope_exit([&]() {
+        if (!hooked_bytes.empty()) {
+            memcpy(
+                &D3D11CreateDeviceAndSwapChain,
+                hooked_bytes.data(),
+                hooked_bytes.size()
+            );
+            spdlog::info("Restoring hooked bytes for D3D11CreateDeviceAndSwapChain");
+        }
+    });
+
     if (original_bytes) {
         spdlog::info("D3D11CreateDeviceAndSwapChain appears to be hooked, temporarily unhooking");
 
-        std::vector<uint8_t> hooked_bytes(original_bytes->size());
-        memcpy(hooked_bytes.data(), &D3D11CreateDeviceAndSwapChain, original_bytes->size());
+        const auto size = original_bytes->size();
+        hooked_bytes.assign(
+            reinterpret_cast<const uint8_t*>(&D3D11CreateDeviceAndSwapChain),
+            reinterpret_cast<const uint8_t*>(&D3D11CreateDeviceAndSwapChain) + size
+        );
 
-        ProtectionOverride protection_override{ &D3D11CreateDeviceAndSwapChain, original_bytes->size(), PAGE_EXECUTE_READWRITE };
-        memcpy(&D3D11CreateDeviceAndSwapChain, original_bytes->data(), original_bytes->size());
-        
-        if (FAILED(D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_NULL, nullptr, 0, &feature_level, 1, D3D11_SDK_VERSION,
-                &swap_chain_desc, &swap_chain, &device, nullptr, &context))) 
-        {
-            spdlog::error("Failed to create D3D11 device");
-            memcpy(&D3D11CreateDeviceAndSwapChain, hooked_bytes.data(), hooked_bytes.size());
-            return false;
-        }
-        
-        spdlog::info("Restoring hooked bytes for D3D11CreateDeviceAndSwapChain");
-        memcpy(&D3D11CreateDeviceAndSwapChain, hooked_bytes.data(), hooked_bytes.size());
-    } else {
-        if (FAILED(D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_NULL, nullptr, 0, &feature_level, 1, D3D11_SDK_VERSION,
-                &swap_chain_desc, &swap_chain, &device, nullptr, &context))) 
-        {
-            spdlog::error("Failed to create D3D11 device");
-            return false;
-        }
+        ProtectionOverride protection_override{
+            &D3D11CreateDeviceAndSwapChain,
+            size,
+            PAGE_EXECUTE_READWRITE
+        };
+        memcpy(
+            &D3D11CreateDeviceAndSwapChain,
+            original_bytes->data(),
+            size
+        );
+    }
+
+    if (FAILED(D3D11CreateDeviceAndSwapChain(
+            nullptr,
+            D3D_DRIVER_TYPE_NULL,
+            nullptr,
+            0,
+            &feature_level,
+            1,
+            D3D11_SDK_VERSION,
+            &swap_chain_desc,
+            &swap_chain,
+            &device,
+            nullptr,
+            &context)))
+    {
+        spdlog::error("Failed to create D3D11 device");
+        return false;
     }
 
     utility::ThreadSuspender suspender{};
 
     try {
+        constexpr int k_present_vtable_index = 8;
+        constexpr int k_resize_buffers_vtable_index = 13;
+
         m_present_hook.reset();
         m_resize_buffers_hook.reset();
 
-        auto& present_fn = (*(void***)swap_chain)[8];
-        auto& resize_buffers_fn = (*(void***)swap_chain)[13];
+        auto* vtable = *reinterpret_cast<void***>(swap_chain.Get());
+        auto& present_fn = vtable[k_present_vtable_index];
+        auto& resize_buffers_fn = vtable[k_resize_buffers_vtable_index];
 
-        m_present_hook = std::make_unique<PointerHook>(&present_fn, (void*)&D3D11Hook::present);
-        m_resize_buffers_hook = std::make_unique<PointerHook>(&resize_buffers_fn, (void*)&D3D11Hook::resize_buffers);
+        m_present_hook = std::make_unique<PointerHook>(
+            &present_fn,
+            reinterpret_cast<void*>(&D3D11Hook::present)
+        );
+        m_resize_buffers_hook = std::make_unique<PointerHook>(
+            &resize_buffers_fn,
+            reinterpret_cast<void*>(&D3D11Hook::resize_buffers)
+        );
 
         m_hooked = true;
     } catch (const std::exception& e) {
@@ -96,10 +129,6 @@ bool D3D11Hook::hook() {
     }
 
     suspender.resume();
-
-    device->Release();
-    context->Release();
-    swap_chain->Release();
     return m_hooked;
 }
 
@@ -124,7 +153,7 @@ HRESULT last_d3d11_present_result = S_OK;
 HRESULT WINAPI D3D11Hook::present(IDXGISwapChain* swap_chain, UINT sync_interval, UINT flags) {
     std::scoped_lock _{g_framework->get_hook_monitor_mutex()};
 
-    auto d3d11 = g_d3d11_hook;
+    auto* const d3d11 = g_d3d11_hook;
 
     // This line must be called before calling our detour function because we might have to unhook the function inside our detour.
     auto present_fn = d3d11->m_present_hook->get_original<decltype(D3D11Hook::present)*>();
@@ -141,7 +170,9 @@ HRESULT WINAPI D3D11Hook::present(IDXGISwapChain* swap_chain, UINT sync_interval
     if (d3d11->m_swapchain_0 == nullptr) {
         d3d11->m_swapchain_0 = swap_chain;
         d3d11->m_swap_chain = swap_chain;
-    } else if (d3d11->m_swapchain_1 == nullptr && swap_chain != d3d11->m_swapchain_0) {
+    }
+    
+    if (d3d11->m_swapchain_1 == nullptr && swap_chain != d3d11->m_swapchain_0) {
         d3d11->m_swapchain_1 = swap_chain;
     }
 
@@ -150,7 +181,10 @@ HRESULT WINAPI D3D11Hook::present(IDXGISwapChain* swap_chain, UINT sync_interval
         return present_fn(swap_chain, sync_interval, flags);
     }*/
 
-    swap_chain->GetDevice(__uuidof(d3d11->m_device), (void**)&d3d11->m_device);
+    swap_chain->GetDevice(
+        __uuidof(d3d11->m_device),
+        reinterpret_cast<void**>(&d3d11->m_device)
+    );
 
     /*if (d3d11->m_set_render_targets_hook == nullptr) {
         ComPtr<ID3D11DeviceContext> context{};
@@ -169,7 +203,7 @@ HRESULT WINAPI D3D11Hook::present(IDXGISwapChain* swap_chain, UINT sync_interval
     // if an infinite loop occurs, this will prevent the game from crashing
     // while keeping our hook intact
     if (g_inside_d3d11_present) {
-        auto original_bytes = utility::get_original_bytes(Address{present_fn});
+        const auto original_bytes = utility::get_original_bytes(Address{present_fn});
 
         if (original_bytes) {
             ProtectionOverride protection_override{present_fn, original_bytes->size(), PAGE_EXECUTE_READWRITE};
@@ -188,23 +222,24 @@ HRESULT WINAPI D3D11Hook::present(IDXGISwapChain* swap_chain, UINT sync_interval
 
     HRESULT result = S_OK;
     g_inside_d3d11_present = true;
+    auto inside_guard = std::scope_exit([d3d11](){
+        g_inside_d3d11_present = false;
+        d3d11->m_inside_present = false;
+    });
 
     if (!d3d11->m_ignore_next_present) {
         result = present_fn(swap_chain, sync_interval, flags);
-        last_d3d11_present_result = result;
     } else {
         d3d11->m_ignore_next_present = false;
-        last_d3d11_present_result = S_OK;
     }
 
-    g_inside_d3d11_present = false;
+    last_d3d11_present_result = result;
 
     if (d3d11->m_on_post_present) {
         d3d11->m_on_post_present(*d3d11);
     }
 
     d3d11->m_last_depthstencil_used.Reset();
-    d3d11->m_inside_present = false;
 
     return result;
 }
@@ -216,7 +251,7 @@ HRESULT WINAPI D3D11Hook::resize_buffers(
     IDXGISwapChain* swap_chain, UINT buffer_count, UINT width, UINT height, DXGI_FORMAT new_format, UINT swap_chain_flags) {
     std::scoped_lock _{g_framework->get_hook_monitor_mutex()};
 
-    auto d3d11 = g_d3d11_hook;
+    auto* const d3d11 = g_d3d11_hook;
     auto resize_buffers_fn = d3d11->m_resize_buffers_hook->get_original<decltype(D3D11Hook::resize_buffers)*>();
 
     DXGI_SWAP_CHAIN_DESC swap_desc{};
@@ -236,7 +271,7 @@ HRESULT WINAPI D3D11Hook::resize_buffers(
     }
 
     if (g_inside_d3d11_resize_buffers) {
-        auto original_bytes = utility::get_original_bytes(Address{resize_buffers_fn});
+        const auto original_bytes = utility::get_original_bytes(Address{resize_buffers_fn});
 
         if (original_bytes) {
             ProtectionOverride protection_override{resize_buffers_fn, original_bytes->size(), PAGE_EXECUTE_READWRITE};
@@ -250,10 +285,11 @@ HRESULT WINAPI D3D11Hook::resize_buffers(
     }
 
     g_inside_d3d11_resize_buffers = true;
+    auto inside_guard = std::scope_exit([](){
+        g_inside_d3d11_resize_buffers = false;
+    });
 
     last_d3d11_resize_buffers_result = resize_buffers_fn(swap_chain, buffer_count, width, height, new_format, swap_chain_flags);
-
-    g_inside_d3d11_resize_buffers = false;
 
     return last_d3d11_resize_buffers_result;
 }
@@ -262,7 +298,7 @@ void WINAPI D3D11Hook::set_render_targets(
     ID3D11DeviceContext* context, UINT num_views, ID3D11RenderTargetView* const* rtvs, ID3D11DepthStencilView* dsv) {
     std::scoped_lock _{g_framework->get_hook_monitor_mutex()};
 
-    auto d3d11 = g_d3d11_hook;
+    auto* const d3d11 = g_d3d11_hook;
 
     if (dsv != nullptr) {
         //auto obj_name = fmt::format("Depthstencil @ {:p}", (void*)d3d11->m_last_depthstencil_used.Get());
@@ -273,7 +309,9 @@ void WINAPI D3D11Hook::set_render_targets(
         dsv->GetDesc(&desc);
 
         if (desc.Flags & D3D11_DSV_FLAG::D3D11_DSV_READ_ONLY_DEPTH) {
-            dsv->GetResource((ID3D11Resource**)d3d11->m_last_depthstencil_used.GetAddressOf());
+            dsv->GetResource(
+                reinterpret_cast<ID3D11Resource**>(d3d11->m_last_depthstencil_used.GetAddressOf())
+            );
 
             //OutputDebugString(fmt::format("Flags: {}", desc.Flags).c_str());
             //OutputDebugString(fmt::format("Format: {}", desc.Format).c_str());

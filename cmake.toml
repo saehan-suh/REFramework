@@ -10,6 +10,9 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 
+# Clang-tidy
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Disable exceptions
 # string(REGEX REPLACE "/EHsc" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
@@ -215,6 +218,10 @@ tag = "70db095765ab2066dd88dfb7bbcc42259ed167c5"
 git = "https://github.com/cursey/kananlib"
 tag = "8c27b656734355db0f2893581fd62e838fa130ad"
 
+[fetch-content.GSL]
+git = "https://github.com/microsoft/GSL"
+tag = "a3534567187d2edc428efd3f13466ff75fe5805c"
+
 [target.utility]
 type = "static"
 sources = ["shared/utility/**.cpp", "shared/utility/**.c"]
@@ -273,7 +280,8 @@ link-libraries = [
     "openxr_loader",
     "delayimp",
     "DirectXTK",
-    "DirectXTK12"
+    "DirectXTK12",
+    "Microsoft.GSL::GSL"
 ]
 cmake-before="""
 """

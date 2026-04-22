@@ -1,20 +1,27 @@
 #pragma once
 
-#include <functional>
+#include <functional>               // std::function
+#include <memory>                   // std::unique_ptr<T>
 
-#include <d3d11.h>
-#include <dxgi.h>
-#include <wrl.h>
+#include <d3d11.h>                  // ID3D11Device*, ID3D11DeviceContext*, ID3D111Texture2D
+#include <dxgi.h>                   // IDXGISwapChain*
+#include <wrl.h>                    // ComPtr
 
-#include "utility/PointerHook.hpp"
+#include "utility/PointerHook.hpp"  // PointerHook, ProtectionOverride; kananlib
 
 class D3D11Hook {
 public:
-    typedef std::function<void(D3D11Hook&)> OnPresentFn;
-    typedef std::function<void(D3D11Hook&)> OnResizeBuffersFn;
+    using OnPresentFn = std::function<void(D3D11Hook&)>;
+    using OnResizeBuffersFn = std::function<void(D3D11Hook&)>;
 
     D3D11Hook() = default;
     virtual ~D3D11Hook();
+
+    // Explicit copy, move ctors disabled; Rule of Five
+    D3D11Hook(const D3D11Hook&) = delete;
+    D3D11Hook& operator=(const D3D11Hook&) = delete;
+    D3D11Hook(D3D11Hook&&) = delete;
+    D3D11Hook& operator=(D3D11Hook&&) = delete;
 
 	bool is_hooked() {
 		return m_hooked;

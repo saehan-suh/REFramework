@@ -1,4 +1,19 @@
-Checks: -*,readability-identifier-naming,readability-else-after-return
+Checks: >
+  -*,
+  readability-identifier-naming,
+  readability-else-after-return,
+  modernize-use-using,
+  modernize-use-override,
+  modernize-use-nullptr,
+  cppcoreguidelines-owning-memory,
+  cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  cppcoreguidelines-pro-type-cstyle-cast,
+  cppcoreguidelines-special-member-functions
+
+WarningsAsErrors: >
+  cppcoreguidelines-pro-type-cstyle-cast,
+  cppcoreguidelines-owning-memory,
+
 HeaderFilterRegex: '^.*src.*(RE|Mod|FreeCam|FirstPerson|Hook|Developer|Object|Flashlight|utility).*\.hpp$'
 # HeaderFilterRegex: '^(.*src.*REContext).*\.hpp$'
 CheckOptions:

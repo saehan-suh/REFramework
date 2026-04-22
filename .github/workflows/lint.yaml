@@ -1,0 +1,86 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  clang-tidy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Verify LLVM presence and clang-tidy
+        run: |
+          $llvmPath = (Get-Command clang-tidy -ErrorAction SilentlyContinue)?.Source
+          if (-not $llvmPath) {
+            choco install llvm -y
+          }
+          clang-tidy --version
+        shell: pwsh
+
+      - name: Add LLVM to PATH
+        run: |
+          echo "C:\Program Files\LLVM\bin" | `
+          Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: pwsh
+
+      - name: Configure CMake
+        run: |
+          cmake -B build `
+            -G "Visual Studio 17 2022" `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DDEVELOPER_MODE=ON `
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
+            -Wno-dev
+        shell: pwsh
+
+      - name: Verify compile_commands.json
+        run: |
+          if (Test-Path "build/compile_commands.json") {
+              Write-Host "compile_commands.json found"
+          } else {
+              Write-Host "compile_commands.json NOT found"
+              Get-ChildItem build/ -ErrorAction SilentlyContinue
+          }
+        shell: pwsh
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            src/**/*.cpp
+            src/**/*.hpp
+
+      - name: Run clang-tidy
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          $workspace = "${{github.workspace}}"
+          $files = "${{ steps.changed-files.outputs.all_changed_files }}"
+          clang-tidy `
+            --extra-arg="-I$workspace/dependencies/spdlog/include" `
+            --extra-arg="-I$workspace/dependencies/spdlog/include/spdlog" `
+            --extra-arg="-I$workspace/shared" `
+            --extra-arg="-I$workspace/src" `
+            --extra-arg="-I$workspace/include" `
+            --extra-arg="-I$workspace/build/_deps/GSL-src/include" `
+            --extra-arg="-std=c++23" `
+            --extra-arg="-DDEVELOPER_MODE" `
+            $files.Split(" ")
+        shell: pwsh
+
+      - name: No relevant files changed
+        if: steps.changed-files.outputs.any_changed == 'false'
+        run: echo "No C++ files changed, skipping lint."
+        shell: pwsh
